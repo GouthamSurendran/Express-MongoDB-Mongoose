@@ -31,7 +31,39 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+
+function auth(req,res,next){
+  console.log(req.headers);
+
+  var authHeader = req.headers.authorization;
+
+  if(!authHeader){
+    var err = new Error('You are not Authenticated!');
+
+    res.setHeader('WWW-Authenticate','Basic');
+    err.status = 401;
+    return next(err);
+  }
+
+  var auth = new Buffer(authHeader.split(' ')[1],'base64').toString().split(':'); // Second element of the array will contain the encoded string
+  
+  var username = auth[0];
+  var password = auth[1];
+
+  if(username === 'admin' && password == 'password'){
+    next();
+  }
+  else {
+    var err = new Error('You are not Authenticated!');
+
+    res.setHeader('WWW-Authenticate','Basic');
+    err.status = 401;
+    return next(err);
+  } 
+}
+app.use(auth);  // Authentication
+
+app.use(express.static(path.join(__dirname, 'public'))); // Allows to serve up static pages from the public folder
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);

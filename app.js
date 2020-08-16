@@ -30,36 +30,52 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser('12345-67890-09876-54321'));
 
-function auth(req,res,next){
-  console.log(req.headers);
+function auth(req, res, next) {
+  console.log(req.signedCookies);
 
-  var authHeader = req.headers.authorization;
+  if (!req.signedCookies.user) {
+    var authHeader = req.headers.authorization;
 
-  if(!authHeader){
-    var err = new Error('You are not Authenticated!');
+    if (!authHeader) {
 
-    res.setHeader('WWW-Authenticate','Basic');
-    err.status = 401;
-    return next(err);
+      var err = new Error('You are not Authenticated!');
+      res.setHeader('WWW-Authenticate', 'Basic');
+      err.status = 401;
+      return next(err);
+    }
+
+    var auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':'); // Second element of the array will contain the encoded string
+
+    var username = auth[0];
+    var password = auth[1];
+
+    if (username === 'admin' && password == 'password') {
+      res.cookie('user','admin',{signed:true}) 
+      next();
+    }
+    else {
+      var err = new Error('You are not Authenticated!');
+
+      res.setHeader('WWW-Authenticate', 'Basic');
+      err.status = 401;
+      return next(err);
+    }
+  }
+  else{
+    if(req.signedCookies.user ==='admin'){
+      next();
+    }
+    else{
+      var err = new Error('You are not Authenticated!');
+      err.status = 401;
+      return next(err); 
+    }
   }
 
-  var auth = new Buffer(authHeader.split(' ')[1],'base64').toString().split(':'); // Second element of the array will contain the encoded string
-  
-  var username = auth[0];
-  var password = auth[1];
 
-  if(username === 'admin' && password == 'password'){
-    next();
-  }
-  else {
-    var err = new Error('You are not Authenticated!');
 
-    res.setHeader('WWW-Authenticate','Basic');
-    err.status = 401;
-    return next(err);
-  } 
 }
 app.use(auth);  // Authentication
 

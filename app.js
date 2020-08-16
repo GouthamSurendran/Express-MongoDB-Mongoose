@@ -42,57 +42,34 @@ app.use(session({
   store: new FileStore()
 }));
 
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
+
 function auth(req, res, next) {
   console.log(req.session);
 
   if (!req.session.user) {
-    var authHeader = req.headers.authorization;
 
-    if (!authHeader) {
-
-      var err = new Error('You are not Authenticated!');
-      res.setHeader('WWW-Authenticate', 'Basic');
-      err.status = 401;
-      return next(err);
-    }
-
-    var auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':'); // Second element of the array will contain the encoded string
-
-    var username = auth[0];
-    var password = auth[1];
-
-    if (username === 'admin' && password == 'password') {
-      req.session.user="admin";
-      next();
-    }
-    else {
-      var err = new Error('You are not Authenticated!');
-
-      res.setHeader('WWW-Authenticate', 'Basic');
-      err.status = 401;
-      return next(err);
-    }
+    var err = new Error('You are not Authenticated!');
+    err.status = 403;
+    return next(err);
   }
   else {
-    if (req.session.user === 'admin') {
+    if (req.session.user === 'authenticated') {
       next();
     }
     else {
       var err = new Error('You are not Authenticated!');
-      err.status = 401;
+      err.status = 403;
       return next(err);
     }
   }
-
-
 
 }
 app.use(auth);  // Authentication
 
 app.use(express.static(path.join(__dirname, 'public'))); // Allows to serve up static pages from the public folder
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
 app.use('/dishes', dishRouter);
 app.use('/promotions', promoRouter);
 app.use('/leaders', leaderRouter);

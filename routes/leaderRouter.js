@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const authenticate = require('../authenticate');
 
 const Leaders = require('../models/leaders');
 
@@ -18,7 +19,7 @@ leaderRouter.route('/')
         }, (err) => next(err))
         .catch((err) => next(err));
 })
-.post((req, res, next) => {
+.post(authenticate.verifyUser,(req, res, next) => {
     Leaders.create(req.body)
         .then((leader) => {
             console.log('Leaders Created', leader);
@@ -28,11 +29,11 @@ leaderRouter.route('/')
         }, (err) => next(err))
         .catch((err) => next(err));
 })
-.put((req, res, next) => {
+.put(authenticate.verifyUser,(req, res, next) => {
     res.statusCode = 403
     res.end('PUT Operation not supported on /Leaders') // Since Put req from client side is not allowed.
 })
-.delete((req, res, next) => {
+.delete(authenticate.verifyUser,(req, res, next) => {
     Leaders.remove({})
         .then((resp) => {
             res.statusCode = 200;
@@ -52,11 +53,11 @@ leaderRouter.route('/:leaderId')
         }, (err) => next(err))
         .catch((err) => next(err));
 })
-.post((req, res, next) => {
+.post(authenticate.verifyUser,(req, res, next) => {
     res.statusCode = 403
     res.end('POST Operation not supported on /Leaders/' + req.params.leaderId) // post operation should not be allowed for /leaderId endpoint.
 })
-.put((req, res, next) => {
+.put(authenticate.verifyUser,(req, res, next) => {
     Leaders.findByIdAndUpdate(req.params.leaderId, {
         $set: req.body
     }, { new: true })
@@ -67,7 +68,7 @@ leaderRouter.route('/:leaderId')
         }, (err) => next(err))
         .catch((err) => next(err));
 })
-.delete((req, res, next) => {
+.delete(authenticate.verifyUser,(req, res, next) => {
     Leaders.findByIdAndRemove(req.params.leaderId)
         .then((resp) => {
             res.statusCode = 200;

@@ -1,15 +1,22 @@
-var express = require('express');
+const express = require('express');
 const bodyParser = require('body-parser');
-var User = require('../models/users');
-var passport = require('passport');
-var authenticate = require('../authenticate');
+const passport = require('passport');
+const authenticate = require('../authenticate');
+
+const User = require('../models/users');
 
 var router = express.Router();
+
 router.use(bodyParser.json());
 
-/* GET users listing. */
-router.get('/', function (req, res, next) {
-  res.send('respond with a resource');
+router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
+  User.find({})
+    .then((users) => {   // will return an array of all the Users.
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.json(users);
+    }, (err) => next(err))
+    .catch((err) => next(err));
 });
 
 router.post('/signup', (req, res, next) => {
@@ -50,7 +57,7 @@ router.post('/login', passport.authenticate('local'), (req, res) => {
   res.json({ success: true, token: token, status: 'Login Successful!' });  // Create and pass the token back to the user
 });
 
-router.get('/logout', (req, res) => {
+router.get('/logout', (req, res, next) => {
   if (req.session) {
     req.session.destroy();
     res.clearCookie('session-id');

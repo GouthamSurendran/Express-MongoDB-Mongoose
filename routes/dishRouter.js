@@ -1,14 +1,13 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
 const authenticate = require('../authenticate');
 const cors = require('./cors');
 
 const Dishes = require('../models/dishes');
 
-const dishRouter = express.Router()
+const dishRouter = express.Router();
 
-dishRouter.use(bodyParser.json())
+dishRouter.use(bodyParser.json());
 
 dishRouter.route('/')
     .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
